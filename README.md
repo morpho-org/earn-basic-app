@@ -4,6 +4,10 @@
 
 A reference implementation showcasing how to integrate Morpho Vaults (EARN) into any frontend application. This template provides a starting point for building a basic interface for Morpho Vaults.
 
+![image](./public/sdk.png)
+
+![image](./public/api.png)
+
 ## Technical Stack
 
 ### Core Libraries
