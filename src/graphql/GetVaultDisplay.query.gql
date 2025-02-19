@@ -1,0 +1,69 @@
+query GetVaultDisplay {
+  vaultByAddress(
+    address: "0x2371e134e3455e0593363cBF89d3b6cf53740618"
+    chainId: 1
+  ) {
+    whitelisted
+    name
+    address
+    symbol
+    liquidity {
+      underlying
+      usd
+    }
+    asset {
+      address
+      symbol
+      name
+      decimals
+      priceUsd
+      tags
+      logoURI
+      chain {
+        id
+      }
+    }
+    metadata {
+      description
+      image
+      curators {
+        image
+        name
+      }
+    }
+    state {
+      allocation {
+        supplyAssets
+        supplyAssetsUsd
+        market {
+          uniqueKey
+          collateralAsset {
+            address
+            symbol
+            name
+            decimals
+            priceUsd
+            tags
+            logoURI
+            chain {
+              id
+            }
+          }
+        }
+      }
+    }
+    allocators {
+      address
+    }
+    chain {
+      id
+      network
+    }
+    creationBlockNumber
+    creationTimestamp
+    creatorAddress
+    factory {
+      address
+    }
+  }
+}
