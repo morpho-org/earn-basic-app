@@ -1,13 +1,6 @@
 //src/service/helpers.ts
 
 import {
-  type Address,
-  MarketParams,
-  UnknownMarketParamsError,
-  getUnwrappedToken,
-} from "@morpho-org/blue-sdk";
-
-import {
   type BundlingOptions,
   type InputBundlerOperation,
   encodeBundle,
@@ -16,14 +9,9 @@ import {
 } from "@morpho-org/bundler-sdk-viem";
 
 import { withSimplePermit } from "@morpho-org/morpho-test";
-import {
-  type SimulationState,
-  isBlueOperation,
-  isErc20Operation,
-  isMetaMorphoOperation,
-} from "@morpho-org/simulation-sdk";
+import { type SimulationState } from "@morpho-org/simulation-sdk";
 
-import { type Account, WalletClient, zeroAddress } from "viem";
+import { type Account, type Address, type WalletClient } from "viem";
 import { parseAccount } from "viem/accounts";
 
 export const setupBundle = async (
@@ -69,43 +57,6 @@ export const setupBundle = async (
 
   const bundle = encodeBundle(operations, startData, supportsSignature);
 
-  const tokens = new Set<Address>();
-
-  operations.forEach((operation) => {
-    const { address } = operation;
-
-    if (
-      isBlueOperation(operation) &&
-      operation.type !== "Blue_SetAuthorization"
-    ) {
-      try {
-        const marketParams = MarketParams.get(operation.args.id);
-
-        if (marketParams.loanToken !== zeroAddress)
-          tokens.add(marketParams.loanToken);
-
-        if (marketParams.collateralToken !== zeroAddress)
-          tokens.add(marketParams.collateralToken);
-      } catch (error) {
-        if (!(error instanceof UnknownMarketParamsError)) throw error;
-      }
-    }
-
-    if (isMetaMorphoOperation(operation)) {
-      tokens.add(address);
-
-      const vault = startData.tryGetVault(address);
-      if (vault) tokens.add(vault.asset);
-    }
-
-    if (isErc20Operation(operation)) {
-      tokens.add(address);
-
-      const unwrapped = getUnwrappedToken(address, startData.chainId);
-      if (unwrapped != null) tokens.add(unwrapped);
-    }
-  });
-
   await onBundleTx?.(startData);
 
   // here EOA should sign tx
@@ -123,18 +74,6 @@ export const setupBundle = async (
       { ...tx, account }
     );
   }
-
-  //   const { bundler } = getChainAddresses(startData.chainId);
-
-  //   await Promise.all(
-  //     [...tokens].map(async (token) => {
-  //       const balance = await client.balanceOf({ erc20: token, owner: bundler });
-
-  //       expect(
-  //         format.number.of(balance, startData.getToken(token).decimals)
-  //       ).toBeCloseTo(0, 8);
-  //     })
-  //   );
 
   return { operations, bundle };
 };
