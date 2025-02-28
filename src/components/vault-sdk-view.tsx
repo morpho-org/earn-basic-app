@@ -5,6 +5,7 @@ import { useGetUserSDKVaultPositions } from "../hooks/useGetUserSDKVaultPosition
 import { Address, formatUnits, parseEther } from "viem";
 import { depositUsingBundler, withdrawUsingBundler } from "../service/actions";
 import { Vault } from "@morpho-org/blue-sdk";
+import { useTokenBalance } from "../hooks/useTokenBalance";
 
 export function VaultSdkView({ vaultAddress }: { vaultAddress: Address }) {
   const [testResults, setTestResults] = useState<string[]>([]);
@@ -35,6 +36,14 @@ export function VaultSdkView({ vaultAddress }: { vaultAddress: Address }) {
     isLoading: positionLoading,
     error: positionError,
   } = useGetUserSDKVaultPositions(vaultAddress);
+
+  const {
+    tokenBalance,
+    isLoading: tokenBalanceLoading,
+    error: tokenBalanceError,
+  } = useTokenBalance(
+    position?.underlyingAddress || "0x0000000000000000000000000000000000000000"
+  );
 
   const runDeposit = async () => {
     // Clear previous results first
@@ -230,6 +239,25 @@ export function VaultSdkView({ vaultAddress }: { vaultAddress: Address }) {
               >
                 Deposit
               </button>
+
+              <div className="text-sm text-gray-400 mt-2">
+                {!client.data?.account ? (
+                  "Connect wallet to see balance"
+                ) : tokenBalanceLoading ? (
+                  "Loading balance..."
+                ) : tokenBalanceError ? (
+                  <span className="text-red-400">Error loading balance</span>
+                ) : tokenBalance ? (
+                  <>
+                    Balance:{" "}
+                    {formatUnits(tokenBalance.balance, tokenBalance.decimals)}{" "}
+                    {tokenBalance.symbol} ({tokenBalance.address.slice(0, 6)}
+                    ...{tokenBalance.address.slice(-4)})
+                  </>
+                ) : (
+                  "No balance data"
+                )}
+              </div>
             </div>
           </div>
 
