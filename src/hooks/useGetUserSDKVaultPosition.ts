@@ -15,16 +15,16 @@ export function useGetUserSDKVaultPositions(vaultAddress: Address) {
   const [position, setPosition] = useState<EnhancedPosition | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const client = useWalletClient();
+  const { data: client } = useWalletClient();
 
   useEffect(() => {
-    if (!client.data?.account) return;
+    if (!client?.account) return;
 
     const fetchPosition = async () => {
       try {
         const [holding, vault] = await Promise.all([
-          Holding.fetch(client.data.account.address, vaultAddress, client.data),
-          Vault.fetch(vaultAddress, client.data),
+          Holding.fetch(client.account.address, vaultAddress, client),
+          Vault.fetch(vaultAddress, client),
         ]);
         const underlyingAsset = vault.underlying;
 
@@ -32,7 +32,7 @@ export function useGetUserSDKVaultPositions(vaultAddress: Address) {
           vault.totalAssets,
           vault.totalSupply
         );
-        const token = await Token.fetch(underlyingAsset, client.data);
+        const token = await Token.fetch(underlyingAsset, client);
 
         setPosition({
           depositedAssets: holding.balance,
@@ -52,11 +52,12 @@ export function useGetUserSDKVaultPositions(vaultAddress: Address) {
       }
     };
 
+    setIsLoading(true);
     fetchPosition();
     const interval = setInterval(fetchPosition, 10000);
 
     return () => clearInterval(interval);
-  }, [client.data, vaultAddress]);
+  }, [client, vaultAddress]);
 
   return { position, isLoading, error };
 }

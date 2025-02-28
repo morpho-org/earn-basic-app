@@ -5,19 +5,18 @@ import { getChainAddresses, MarketId } from "@morpho-org/blue-sdk";
 import {
   SimulationStateLike,
   useSimulationState,
+  UseSimulationStateReturnType,
 } from "@morpho-org/simulation-sdk-wagmi";
 import { Address, ReadContractErrorType } from "viem";
 
 export const usePopulatedSimulationState = (vaultAddress: Address) => {
-  const client = useWalletClient();
+  const { data: client } = useWalletClient();
   const { data: block } = useBlock({
     chainId: undefined,
     watch: true,
   });
 
-  const address = client.data?.account?.address;
-
-  const targetChainId = client.data?.chain.id ?? 1;
+  const targetChainId = client?.chain.id ?? 1;
   // If we're on Anvil (31337), use mainnet addresses for testing
   const effectiveChainId = targetChainId === 31337 ? 1 : (targetChainId ?? 1);
 
@@ -31,21 +30,21 @@ export const usePopulatedSimulationState = (vaultAddress: Address) => {
   // Create the list of users (only the account and bundler, for example)
   const users = useMemo(() => {
     const list: string[] = [];
-    if (address) list.push(address);
+    if (client?.account?.address) list.push(client.account.address);
     if (bundler) list.push(bundler);
     if (vaultAddress) list.push(vaultAddress);
     return list;
-  }, [address, bundler, vaultAddress]);
+  }, [client?.account?.address, bundler, vaultAddress]);
 
   // Use effectiveChainId for tokens
-  const tokens = useMemo<string[]>(() => {
+  const tokens = useMemo<Address[]>(() => {
     const chainAddresses = getChainAddresses(effectiveChainId);
 
     const weth = chainAddresses.wNative;
-    const wstEth = chainAddresses.wstEth as `0x${string}`;
-    const vaultToken = vaultAddress as `0x${string}`;
+    const wstEth = chainAddresses.wstEth ?? "0x";
+    const vaultToken = vaultAddress;
     return [weth, wstEth, vaultToken];
-  }, [effectiveChainId]);
+  }, [vaultAddress, effectiveChainId]);
 
   // if any vaults are needed, add them here
   const vaults = useMemo<string[]>(() => [vaultAddress], [vaultAddress]);
@@ -80,7 +79,7 @@ export const usePopulatedSimulationState = (vaultAddress: Address) => {
     return hasRealError ? JSON.stringify(error, null, 2) : null;
   };
 
-  let simulation;
+  let simulation: UseSimulationStateReturnType;
 
   try {
     simulation = useSimulationState({
